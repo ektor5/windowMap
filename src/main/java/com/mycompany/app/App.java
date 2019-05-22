@@ -47,9 +47,8 @@ public class App
 		String address = "localhost";
 
 		/* Consumer */
-
-		ArrayList<FlinkKafkaConsumer<String>> myConsumerArray = new ArrayList<FlinkKafkaConsumer<String>>();
-		ArrayList<DataStream<String>> streamArray = new ArrayList<DataStream<String>>();
+		ArrayList<FlinkKafkaConsumer<Float>> myConsumerArray = new ArrayList<FlinkKafkaConsumer<Float>>();
+		ArrayList<DataStream<Float>> streamArray = new ArrayList<DataStream<Float>>();
 		ArrayList<DataStream<String>> windowArray = new ArrayList<DataStream<String>>();
 		ArrayList<FlinkKafkaProducer<String>> myProducerArray = new ArrayList<FlinkKafkaProducer<String>>();
 
@@ -60,16 +59,10 @@ public class App
 				.addSource(myConsumerArray.get(i)));
 
 			windowArray.add( streamArray.get(i)
-				.map(new MapFunction<String,Float>(){
-					@Override
-					public Float map(String s) throws Exception {
-						return Float.parseFloat(s);
-					}
-				} )
 				// tumbling count window of 100 elements size
-				.windowAll(TumblingProcessingTimeWindows.of(Time.seconds(5)))
+				.windowAll(SlidingProcessingTimeWindows.of(Time.seconds(10),Time.seconds(5)))
 				// compute the sum 
-				.sum(0)
+				.apply (new MeanAllWindow())
 				.map(new MapFunction<Float,String>(){
 					@Override
 					public String map(Float f) throws Exception {
@@ -97,6 +90,21 @@ public class App
 	public long extractTimestamp(Long element, long previousElementTimestamp) {
 		return previousElementTimestamp;
 	}
+	
+	public static class MeanAllWindow
+			implements AllWindowFunction<Float, Float, TimeWindow>  {
+		public void apply ( TimeWindow window,
+				Iterable<Float> values,
+				Collector<Float> out) throws Exception {
+			float sum = 0;
+			int n = 0;
+			for (Float t: values) {
+				sum += t;
+				n++;
+			}
+			out.collect (new Float(sum/n));
+		}
+	}
 
 	public static FlinkKafkaConsumer<String> createStringConsumerForTopic(
 			String topic, String kafkaAddress, String kafkaGroup ) {
@@ -120,6 +128,62 @@ public class App
 		return new FlinkKafkaProducer<>(kafkaAddress,
 				topic, new SimpleStringSchema());
 			}
+	public static FlinkKafkaConsumer<Float> createFloatConsumerForTopic(
+			String topic, String kafkaAddress, String kafkaGroup ) {
+
+		Properties properties = new Properties();
+		properties.setProperty("bootstrap.servers", kafkaAddress+":9092");
+		// only required for Kafka 0.8
+		properties.setProperty("zookeeper.connect", kafkaAddress+":2181");
+		properties.setProperty("group.id", "test");
+
+		FlinkKafkaConsumer<Float> consumer = new FlinkKafkaConsumer<>(
+				topic, new SimpleFloatSchema(), properties);
+
+		System.out.println( "Set consumer for " + topic );
+		return consumer;
+			}
+	public static FlinkKafkaProducer<Float> createFloatProducer(
+			String topic, String kafkaAddress){
+
+		System.out.println( "Set producer for " + topic );
+		return new FlinkKafkaProducer<>(kafkaAddress,
+				topic, new SimpleFloatSchema());
+			}
+	public static class SimpleFloatSchema implements
+		DeserializationSchema<Float>, SerializationSchema<Float>{
+
+		public static byte[] toByteArray(float value) {
+			byte[] bytes = new byte[4];
+			ByteBuffer.wrap(bytes).putFloat(value);
+			return bytes;
+		}
+
+		public static float toFloat(byte[] bytes) {
+			return ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+		}
+
+		@Override
+		public byte[] serialize(Float element) {
+			return toByteArray(element);
+		}
+
+		@Override
+		public Float deserialize(byte[] message) {
+			return toFloat(message);
+		}
+
+		@Override
+		public boolean isEndOfStream(Float nextElement) {
+			return false;
+		}
+
+		@Override
+		public TypeInformation<Float> getProducedType() {
+			return TypeExtractor.getForClass(Float.class);
+		}
+	}
+		
 	public static class windowMap implements MapFunction<String, String>{
 
 		static private Integer i = 0;
