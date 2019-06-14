@@ -103,7 +103,6 @@ async def run():
 
     except Exception:
         _logger.exception('error')
-        cfile.close()
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
