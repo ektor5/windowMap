@@ -9,7 +9,7 @@ STREAM="mvn exec:java -D exec.mainClass=com.mycompany.app.App -Dexec.args=$3"
 TMP=$(mktemp /tmp/opcuatest-XXXXX)
 
 # log system stats
-collectl -P -f $TMP 1>&2
+collectl -P -f $TMP 1>&2 &
 COLLECT_PID=$!
 
 # start Flink streaming job
