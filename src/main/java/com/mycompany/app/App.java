@@ -34,7 +34,7 @@ public class App
 	public static void main( String[] args ) throws Exception
 	{
 
-		LOG.info("lalalalalala");
+		LOG.info("Starting Streaming Job");
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		final Integer WINDOWSIZE = 10;
 
@@ -53,14 +53,14 @@ public class App
 		ArrayList<FlinkKafkaProducer<String>> myProducerArray = new ArrayList<FlinkKafkaProducer<String>>();
 
 		for (int i=0; i<ntopics; i++){
-			myConsumerArray.add( createStringConsumerForTopic(element+Integer.toString(i), address, "123"));
+			myConsumerArray.add( createFloatConsumerForTopic(element+Integer.toString(i), address, "123"));
 			myConsumerArray.get(i).setStartFromLatest();
 			streamArray.add( env
 				.addSource(myConsumerArray.get(i)));
 
 			windowArray.add( streamArray.get(i)
 				// tumbling count window of 100 elements size
-				.windowAll(SlidingProcessingTimeWindows.of(Time.seconds(10),Time.seconds(5)))
+				.windowAll(SlidingProcessingTimeWindows.of(Time.seconds(10),Time.seconds(1)))
 				// compute the sum 
 				.apply (new MeanAllWindow())
 				.map(new MapFunction<Float,String>(){
