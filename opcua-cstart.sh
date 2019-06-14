@@ -19,7 +19,7 @@ STREAM_PID=$!
 sleep 1
 
 # start opcua2kafka client
-${CLIENT} $1 $SERVER_ADDRESS /tmp/client-tmp 1>&2 &
+${CLIENT} $1 $SERVER_ADDRESS $2 1>&2 &
 CLIENT_PID=$!
 
 wait $CLIENT_PID && kill -INT $STREAM_PID && kill $COLLECT_PID

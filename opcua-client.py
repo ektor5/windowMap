@@ -5,7 +5,6 @@ import asyncio
 import logging
 import struct
 import sys
-import csv
 import signal
 from kafka import KafkaProducer
 from kafka.admin import KafkaAdminClient,NewTopic
@@ -20,23 +19,22 @@ admin = KafkaAdminClient(bootstrap_servers='localhost:9092')
 
 subs_timeout = 300
 address = "192.168.10.2"
-csvfile = "/dev/null"
+killtime = 60
 
 if len(sys.argv) > 1 :
     subs_timeout = int(sys.argv[1])
 if len(sys.argv) > 2 :
     address = str(sys.argv[2])
 if len(sys.argv) > 3 :
-    csvfile = str(sys.argv[3])
+    killtime = int(sys.argv[3])
 
 assert (int(subs_timeout) > 0),"timeout less than absolute zero!"
 assert (len(address) > 0 ), "address not valid"
-assert (len(csvfile) > 0 ), "filename not valid"
+assert (int(killtime) > 0 ), "killtime not valid"
 
 class SubHandler(object):
 
-    def __init__(self,f,log,nodemap):
-        self.f = f
+    def __init__(self,log,nodemap):
         self.log = log
         self.m = nodemap
 
@@ -46,35 +44,30 @@ class SubHandler(object):
         delay = now - val
 
         self.log.info("%s: New data change event: %s, %f", time.ctime(now), node, delay)
-                #str(data.monitored_item.Value.SourceTimestamp))
         producer.send(self.m[node.nodeid], bytearray(struct.pack("f",time.time()-val)) )
 
-        #self.f.writerow([now, self.m[node.nodeid], delay])
 
     def event_notification(self, event):
         _logger.info("New event", event)
 
 async def timer():
     global stop
-    await asyncio.sleep(60)
+    await asyncio.sleep(killtime)
     stop = 1
 
 async def run():
     global stop
     stop = 0
     url = 'opc.tcp://' + address + ':4840/freeopcua/server/'
-    cfile = open(csvfile, 'w', newline='')
-    writer = csv.writer(cfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-
-    def interruptHandler(signal, frame):
-        global stop
-        stop = 1
-        print("Interrupt (ID: {}) has been caught. Cleaning up...".format(signal))
-
-    signal.signal(signal.SIGINT, interruptHandler)
 
     try:
         async with Client(url=url) as client:
+            def interruptHandler(signal, frame):
+                global stop
+                stop = 1
+                print("Interrupt (ID: {}) has been caught. Cleaning up...".format(signal))
+
+            signal.signal(signal.SIGINT, interruptHandler)
             root = client.get_root_node()
             _logger.info("Root node is: %r", root)
             objects = client.get_objects_node()
@@ -92,7 +85,7 @@ async def run():
                 nodemap[i.nodeid] = name.Text;
 
             sub = await client.create_subscription(subs_timeout,
-                    SubHandler(writer,_logger,nodemap))
+                    SubHandler(_logger,nodemap))
 
             await sub.subscribe_data_change(subs)
             loop = asyncio.get_event_loop()
@@ -100,14 +93,12 @@ async def run():
             
             while True:
                 await asyncio.sleep(0.5)
-                cfile.flush()
                 if not sub:
                     raise Exception("sub died")
                 if not client:
                     raise Exception("client died")
                 if stop:
                     await sub.delete()
-                    cfile.close()
                     break
 
     except Exception:
