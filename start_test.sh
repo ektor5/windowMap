@@ -147,7 +147,7 @@ fi
 
 DATE=$(date -Iminutes)
 mv ${TMP}*.tab.gz "$RESULTDIR/flink_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}_${DATE}.tab.gz"
-mv ${TMP}_stream.log "$RESULTDIR/flink_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}_${DATE}.tab.gz"
+mv ${TMP}_stream.log "$RESULTDIR/flink_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}_${DATE}_stream.log"
 #mv ${TMP}.csv "$RESULTDIR/opcua_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}.csv"
 #mv ${TMP}.pcap "$RESULTDIR/opcua_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}.pcap"
 
