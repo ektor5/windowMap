@@ -22,7 +22,7 @@ sleep 1
 ${CLIENT} $1 $SERVER_ADDRESS $2 1>&2 &
 CLIENT_PID=$!
 
-wait $CLIENT_PID && kill -INT $STREAM_PID && kill $COLLECT_PID
+wait $CLIENT_PID && kill $STREAM_PID && kill $COLLECT_PID
 
 rm $TMP
 
