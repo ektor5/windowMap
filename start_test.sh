@@ -145,9 +145,12 @@ then
 	exit 1
 fi
 
-DATE=$(date -Iminutes)
-mv ${TMP}*.tab.gz "$RESULTDIR/flink_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}_${DATE}.tab.gz"
-mv ${TMP}_stream.log "$RESULTDIR/flink_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}_${DATE}_stream.log"
+DATE=$(date +%y%m%d)
+TESTDIR="$RESULTDIR/flink_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}_${DATE}"
+mkdir -p "$TESTDIR"
+
+mv ${TMP}*.tab.gz "$TESTDIR/"
+mv ${TMP}_stream.log "$TESTDIR/"
 #mv ${TMP}.csv "$RESULTDIR/opcua_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}.csv"
 #mv ${TMP}.pcap "$RESULTDIR/opcua_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}.pcap"
 
