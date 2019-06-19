@@ -11,7 +11,7 @@ rm -f var_counting
 #recompile, just in case
 gradle clean build jar
 
-for j in `seq ${#VARS}`
+for j in `seq ${#VARS[@]}`
 do
 	i=${VARS[$j]}
 	r=${RFR_RATE[$j]}
