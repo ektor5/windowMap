@@ -7,6 +7,7 @@
   <groupId>com.mycompany.app</groupId>
   <artifactId>my-app</artifactId>
   <version>1.8-SNAPSHOT</version>
+  <packaging>jar</packaging>
 
   <name>my-app</name>
   <!-- FIXME change it to the project's website -->
@@ -45,6 +46,17 @@
 		  <artifactId>flink-java</artifactId>
 		  <version>1.8.0</version>
 	  </dependency>
+	  <dependency>
+		  <groupId>org.apache.flink</groupId>
+		  <artifactId>flink-clients_2.12</artifactId>
+		  <version>1.8.0</version>
+	  </dependency>
+	  <dependency>
+		  <groupId>org.apache.flink</groupId>
+		  <artifactId>flink-runtime_2.12</artifactId>
+		  <version>1.8.0</version>
+	  </dependency>
+
 	  <dependency>
 		  <groupId>org.slf4j</groupId>
 		  <artifactId>slf4j-api</artifactId>

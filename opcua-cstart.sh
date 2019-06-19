@@ -4,17 +4,16 @@ set -e
 
 SERVER_ADDRESS="192.168.10.2"
 CLIENT="./opcua-client.py"
-STREAM="mvn exec:java -D exec.mainClass=com.mycompany.app.App -Dexec.args=$3"
 
 TMP=$(mktemp /tmp/opcuatest-XXXXX)
+
+JOBMANAGER_CONTAINER=$(docker ps --filter name=jobmanager --format={{.ID}})
+docker cp "build/libs/*-all.jar" "$JOBMANAGER_CONTAINER":/job.jar
+docker exec "$JOBMANAGER_CONTAINER" flink run /job.jar $VARS 1>&2 &
 
 # log system stats
 collectl -P -f $TMP 1>&2 &
 COLLECT_PID=$!
-
-# start Flink streaming job
-${STREAM} 1>&2 > ${TMP}_stream.log &
-STREAM_PID=$!
 
 sleep 1
 
@@ -22,7 +21,7 @@ sleep 1
 ${CLIENT} $1 $SERVER_ADDRESS $2 1>&2 &
 CLIENT_PID=$!
 
-wait $CLIENT_PID && kill $STREAM_PID && kill $COLLECT_PID
+wait $CLIENT_PID && kill $COLLECT_PID
 
 rm $TMP
 

@@ -8,6 +8,9 @@ RUN_TIME=60
 
 rm -f var_counting
 
+#recompile, just in case
+gradle clean build jar
+
 for j in `seq ${#VARS}`
 do
 	i=${VARS[$j]}

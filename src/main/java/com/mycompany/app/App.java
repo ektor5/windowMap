@@ -44,7 +44,7 @@ public class App
 		System.out.println( "Hello World! " +  Integer.toString(ntopics));
 
 		String element = "MyVariable";
-		String address = "localhost";
+		String address = "kafka";
 
 		/* Consumer */
 		ArrayList<FlinkKafkaConsumer<Float>> myConsumerArray = new ArrayList<FlinkKafkaConsumer<Float>>();
@@ -132,9 +132,9 @@ public class App
 			String topic, String kafkaAddress, String kafkaGroup ) {
 
 		Properties properties = new Properties();
-		properties.setProperty("bootstrap.servers", kafkaAddress+":9092");
+		properties.setProperty("bootstrap.servers", "kafka:9092");
 		// only required for Kafka 0.8
-		properties.setProperty("zookeeper.connect", kafkaAddress+":2181");
+		properties.setProperty("zookeeper.connect", "zookeeper:2181");
 		properties.setProperty("group.id", "test");
 
 		FlinkKafkaConsumer<Float> consumer = new FlinkKafkaConsumer<>(

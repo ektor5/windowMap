@@ -135,7 +135,6 @@ then
 	mkdir -p ${RESULTDIR}
 fi
 
-
 log "Done. Killing server..."
 close
 
