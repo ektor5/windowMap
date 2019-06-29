@@ -140,24 +140,9 @@ then
 	exit 1
 fi
 
-#start kafka
-docker-compose up -d
-KAFKA=1
-
-sleep 5
-
 #start client
 log "Starting client"
 TMP=$(./$CSTART $RQS_RATE $RUN_TIME $VARS)
-
-log "Downloading results..."
-if [ ! -d "$RESULTDIR" ]
-then
-	mkdir -p ${RESULTDIR}
-fi
-
-log "Done. Killing server..."
-close
 
 if [ -z "$TMP" ]
 then
@@ -165,18 +150,29 @@ then
 	exit 1
 fi
 
-DATE=$(date +%y%m%d)
+log "Downloading results..."
+if [ ! -d "$RESULTDIR" ]
+then
+	mkdir -p ${RESULTDIR}
+fi
+
+DATE=$(date +%FT%H%M)
 TESTDIR="$RESULTDIR/flink_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}_${DATE}"
 mkdir -p "$TESTDIR"
 
-mv ${TMP}*.tab.gz "$TESTDIR/"
-mv ${TMP}_stream.log "$TESTDIR/"
+mv ${TMP}*.gz "$TESTDIR/"
+#mv ${TMP}_stream.log "$TESTDIR/"
 #mv ${TMP}.csv "$RESULTDIR/opcua_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}.csv"
 #mv ${TMP}.pcap "$RESULTDIR/opcua_v${VARS}_rf${RFR_RATE}_rq${RQS_RATE}_t${RUN_TIME}.pcap"
+
+docker logs $JOBMANAGER_CONTAINER > "$TESTDIR/flink.log"
+docker logs $KAFKA_CONTAINER > "$TESTDIR/kafka.log"
+kafkacat -C -e -b kafka -t MyVariable0flinked -f '%T %s \n' > "$TESTDIR/delay.csv"
 
 sleep 1
 COUNT=$(ssh $SERVER_ADDRESS cat /tmp/opcua-counting)
 log "count $COUNT"
 echo ${VARS} ${RFR_RATE} ${RQS_RATE} $COUNT >> var_counting
 
-exit 0
+log "Done. Killing server..."
+close
