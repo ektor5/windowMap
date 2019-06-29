@@ -106,6 +106,17 @@ remote <<-LOL
 	LOL
 remote trap clean INT EXIT QUIT ABRT TERM
 
+trap close INT ERR
+
+log "Starting containers"
+#start kafka
+docker-compose up -d
+KAFKA=1
+
+JOBMANAGER_CONTAINER=$(docker ps --filter name=jobmanager --format={{.ID}})
+KAFKA_CONTAINER=$(docker ps --filter name=kafka --format={{.ID}})
+docker cp build/libs/my-app-1.8-SNAPSHOT-all.jar "$JOBMANAGER_CONTAINER":/job.jar
+docker exec -t -i "$JOBMANAGER_CONTAINER" flink run -d /job.jar $VARS 
 
 remote ${SERVER_PATH}/$SERVER $VARS $RFR_RATE \&
 remote 'SPID=$!'
