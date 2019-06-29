@@ -39,7 +39,7 @@ log() {
 }
 
 remote () {
-	kill -0 $SERVER_PID || error
+	kill -0 $SERVER_PID 
 	if (( $# ))
 	then
 		cat <<< "$@" > $S_FIFO ;
@@ -72,12 +72,20 @@ close(){
 		docker-compose down
 	fi
 
-	remote_end 'kill -INT $SPID'
+	if (( OPCUA ))
+	then 
+		#kill remote
+		remote_end 'kill -INT $SPID'
+	else
+		remote_end
+	fi
 	
 	if [ -e "$S_FIFO" ]
 	then
 		rm "$S_FIFO"
 	fi
+
+	exit 0
 }
 
 #Upload
@@ -118,11 +126,13 @@ KAFKA_CONTAINER=$(docker ps --filter name=kafka --format={{.ID}})
 docker cp build/libs/my-app-1.8-SNAPSHOT-all.jar "$JOBMANAGER_CONTAINER":/job.jar
 docker exec -t -i "$JOBMANAGER_CONTAINER" flink run -d /job.jar $VARS 
 
+log "Starting opcua server"
+#start opcua server
 remote ${SERVER_PATH}/$SERVER $VARS $RFR_RATE \&
 remote 'SPID=$!'
+OPCUA=1
 
-trap close INT
-sleep 10
+sleep 15
 
 if [ ! -x /proc/$SERVER_PID ]
 then
